@@ -95,3 +95,24 @@ fn add_path(conn: &Connection, path: &str) -> Result<()> {
     )?;
     Ok(())
 }
+
+// Переместить файлы в целевую папку.
+fn move_target_files(source: &Path, target: &Path) -> io::Result<()> {
+    if !target.exists() {
+        fs::create_dir_all(target)?;
+    }
+
+    for entry in fs::read_dir(source)? {
+        let entry = entry?;
+        let source_path = entry.path();
+
+        if source_path.is_file() {
+            let file_name = source_path.file_name().unwrap();
+            let target_path = target.join(file_name);
+
+            fs::rename(&source_path, &target_path)?;
+            println!("Перещен: {:?}", file_name);
+        }
+    }
+    Ok(())
+}
