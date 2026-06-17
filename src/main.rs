@@ -1,8 +1,8 @@
 use std::fs;
 use std::path::Path;
-use std::io;
-use std::io::Write;
+use std::io::{self, Write};
 use chrono::{DateTime, Local};
+use rusqlite::{params, Connection, Result};
 
 fn main() {
     let mut init_path = String::new();
@@ -56,5 +56,42 @@ fn scan_folder<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
         }
         println!("\n");
     }
+    Ok(())
+}
+
+// Инициализация БД и создание таблицы.
+fn init_db() -> Result<Connection> {
+    let conn = Connection::open("pth_hst.db")?;
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS PATHS_HST(\
+        path TEXT primary key\
+        )",
+        [],
+    )?;
+    Ok(conn)
+}
+
+// Получить список путей сохраненных в БД.
+fn get_all_paths(conn: &Connection) -> Result<Vec<String>> {
+    let mut stmt = conn.prepare("SELECT path FROM PATHS_HST")?;
+
+    let path_iter = stmt.query_map([],|row| {
+        let path: String = row.get(0)?;
+        Ok(path)
+    })?;
+
+    let mut paths = Vec::new();
+    for path_result in path_iter {
+        paths.push(path_result?);
+    }
+    Ok(paths)
+}
+
+// Добавить новый путь в БД.
+fn add_path(conn: &Connection, path: &str) -> Result<()> {
+    conn.execute(
+        "INSERT OR IGRNORE INTO PATHS_HST (path) VALUES (?)",
+        [path],
+    )?;
     Ok(())
 }
