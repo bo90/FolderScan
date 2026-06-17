@@ -1,9 +1,30 @@
 use std::fs;
 use std::path::Path;
+use std::io;
+use std::io::Write;
 use chrono::{DateTime, Local};
 
 fn main() {
-    scan_folder(".").unwrap();
+    let mut init_path = String::new();
+
+    print!("Введите путь к папке: ");
+    io::stdout().flush().unwrap();
+
+    io::stdin()
+        .read_line(&mut init_path)
+        .expect("Не удалось прочитать каталог");
+
+    let trimmed_path = init_path.trim();
+    let exist_path = Path::new(trimmed_path);
+    if exist_path.exists() {
+        println!("Путь до каталога получен: {}", trimmed_path);
+
+        if let Err(e) = scan_folder(exist_path) {
+            eprintln!("Ошибка при чтении метаданных: {}", e);
+        }
+    } else {
+        eprintln!("Ошибка! Путь '{}' не существует!", trimmed_path);
+    }
 }
 
 fn scan_folder<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
